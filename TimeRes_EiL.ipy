@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jul 26 14:26:32 2024
+
+@author: ariana
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import glob
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+from scipy.spatial.distance import hamming
+from matplotlib import cm 
+from itertools import combinations
+%matplotlib qt
+
+#%%
+
+path = "~/Documents/Barcoding/EiL/Sequences/"
+
+#files = ["Bs224hybCy1_A11_barcode_cut_pb_freq.csv", "Bs224hybCy3_A11_barcode_cut_pb_freq.csv", "Bs224hybCy5_A11_barcode_cut_pb_freq.csv"]
+files = ["Bs210hybCy1_E04_barcode_cut_pb_freq.csv", "Bs210hybCy3_E04_barcode_cut_pb_freq.csv", "Bs210hybCy5_E04_barcode_cut_pb_freq.csv"]
+ 
+
+#MultiFreqs = pd.read_csv(path + "Bs224hyb_A11_multi_freqs.csv", sep = ',', header = 0)
+MultiFreqs = pd.read_csv(path + "Bs210hyb_E04_multi_freqs.csv", sep = ',', header = 0)
+
+TimePointsData = [] 
+TimePoints = ["Cy1", "Cy3", "Cy5"]
+for i in range(len(files)):
+    TimePointsData.append(pd.read_csv(path+files[i], sep = ',', header = 0))
+
+
+
+ratios = np.empty([len(MultiFreqs), 3])
+for i in range(len(TimePoints)):
+    ratios[:, i] = MultiFreqs.iloc[:, i+1]/np.sum(MultiFreqs.iloc[:, i+1])
+  
+
+#ratios = ratios[ratios[:, 2] != 0]
+sumR = np.sum(ratios, axis = 0)
+
+#%%  make stacker plots
+xax = [1, 3, 5]
+y = np.vstack(ratios);
+
+plt.stackplot(xax, y)
+plt.xlabel('Cycle')
+plt.xticks([1, 3, 5], ('1', '3', '5'))
+plt.title('Bs210hyb E04')
+#%%
+xax = [1, 3, 5]
+
+for i in range(len(ratios)):
+    
+    plt.plot(xax, ratios[i, :])
+    
+plt.xlabel("time in h")
+plt.ylabel("barcode frequency")
+
+#%%
+
+xax = [1, 3, 5]
+yy = [1, 2, 3]
+for i in range(3): yy[i]=len(ratios[ratios[:, i] != 0])
+
+plt.plot(xax, yy)

@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Mar 20 15:56:47 2024
+
+@author: ariana
+"""
+
+import numpy as np
+import pandas as pd 
+from matplotlib import pyplot as plt
+%matplotlib qt
+plt.close('all')
+
+path1= "/home/ariana/Documents/Barcoding/EiL/"
+#path2= "/home/ariana/Documents/Barcoding/SimReads_cluster.txt"
+name = "Bs210hybPlCy5_B04" 
+#nameMono = "NG-A0922_Bs210HybEil5C06_libLAC3614"
+EvolBC=pd.read_csv(path1+ "Sequences/" + name +"_barcode_cut_pb_freq.csv", sep=',', header=0)
+EvolBC.insert(2, "ratio", EvolBC['frequency']/np.sum(EvolBC['frequency']))
+
+#MonoBC = pd.read_csv(path1+ "Sequences/" + nameMono +"_barcode_cut_seq_clust.csv", sep=',', header=0)
+
+S15 = pd.read_csv("/home/ariana/Documents/Barcoding/MelihsLib_extractedBarcodes/A006200334_206985_S16_barcode_cut_pb_freq.csv", sep= ',', header = 0)
+
+
+
+#%%
+################ pie plots #######
+colors = ['#FBCEB1', '#E9D66B', '#CEB1FB', '#B1FBCE', '#B1DEFB', '#B2BEB5']
+labels = 'BC1', 'BC2', 'BC3', 'BC4', 'BC5', 'Other'
+ratios = np.append(EvolBC.to_numpy()[0:5, 1], sum(EvolBC['frequency'][5:]))
+#labels = 'BC1', 'BC2', 'BC3', 'Other'
+#ratios = np.append(EvolBC.to_numpy()[0:3, 1], sum(EvolBC['frequency'][3:]))
+#colors = ['#FBCEB1', '#E9D66B', '#CEB1FB', '#B2BEB5']
+plt.pie(ratios, labels=labels, colors=colors, autopct='%1.1f%%')
+plt.rcParams['figure.figsize'] = [5, 10]
+plt.title('Barcodes with ratios >1% are depicted individually', bbox=dict(facecolor='none', edgecolor='black'))
+plt.savefig(path1 + "plots/" + name +"piechart.png")
+
+#%%
+####### comp w monoclonal ###########
+
+pick = "GAGACGGGGTGTGTCGGGGGGGGTC"
+pos = np.zeros((len(MonoBC), 1))
+x = []
+for i in range(len(MonoBC)):
+    
+    find = MonoBC['sequence'][i] == EvolBC['barcode'].to_numpy()
+    x = np.append(x, find.nonzero())
+    if find.any():
+        pos[i, 0] = i
+        
+#%%  comparison between the ratios in original lib and current sample
+
+EvolBCF = EvolBC[EvolBC.barcode.isin(S15.barcode)].reset_index()
+S15F = S15[S15.barcode.isin(EvolBCF.barcode)]
+
+S15sort = np.empty(len(S15F))
+
+for el in range(len(S15F)):
+    f =  EvolBCF.barcode == S15F.iloc[el].barcode
+    r = f[f].index
+    S15sort[r] = S15F.iloc[el].frequency
+ 
+    
+S15sort = S15sort/np.sum(S15sort)
+RatioTE = EvolBCF.frequency/np.sum(EvolBCF.frequency)
+    
+plt.scatter(S15sort, RatioTE)
+plt.xlabel('Ratio in Lib')
+plt.ylabel('Ratio in 210hyb')
+#plt.ylim([0, 0.01])
+coeffM = np.corrcoef(S15sort, RatioTE)
+#plt.savefig(path1 + "plots/" + name +"RatioScatter.png")
